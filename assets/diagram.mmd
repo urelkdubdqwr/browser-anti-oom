@@ -1,0 +1,9 @@
+flowchart LR
+    T[task triggered<br/>cron / agent / scraper] --> A[acquire slot<br/>flock pool · max 2]
+    A -.->|all slots busy| Q[queue<br/>waits, not spawns]
+    Q --> A
+    A --> S["spawn Chromium<br/>lean flags · ephemeral profile"]
+    S --> W[do the work]
+    W --> C["browser.close() in finally"]
+    C --> I(("idle = 0 chrome processes"))
+    I -.->|next task| T
