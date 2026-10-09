@@ -1,5 +1,7 @@
 # browser-anti-oom
 
+<img src="assets/header.svg" alt="browser-anti-oom — headless browser on-demand · zero idle RAM · zero zombies" width="100%">
+
 **Stop letting headless browsers eat your VPS.** A battle-tested recipe for running
 Chromium/Firefox as an on-demand tool for AI agents, cron jobs, and scrapers —
 without the RAM creep, zombie processes, and 3 AM OOM-killer surprises.
@@ -30,6 +32,22 @@ Spawn it, do the work, kill it in `finally`. Idle = zero browser processes.
    cookie/storage isolation with zero extra disk. ([`docs/profile-strategy.md`](docs/profile-strategy.md))
 
 Impact order: on-demand (1) > lean flags (2) > concurrency cap (3) > OS guards (4).
+
+## How it fits together
+
+```mermaid
+flowchart LR
+    T[task triggered<br/>cron / agent / scraper] --> A[acquire slot<br/>flock pool · max 2]
+    A -.->|all slots busy| Q[queue<br/>waits, not spawns]
+    Q --> A
+    A --> S["spawn Chromium<br/>lean flags · ephemeral profile"]
+    S --> W[do the work]
+    W --> C["browser.close() in finally"]
+    C --> I(("idle = 0 chrome processes"))
+    I -.->|next task| T
+```
+
+One task = one browser = dead browser. The pool caps concurrency, the `finally` guarantees the kill, and the OS guards (`swap` + `earlyoom`, see [`docs/os-guards.md`](docs/os-guards.md)) are the last line of defense if something leaks anyway.
 
 ## Quickstart
 
