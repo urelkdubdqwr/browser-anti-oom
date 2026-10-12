@@ -9,7 +9,7 @@
 # Example: ./browser-run.sh https://example.com 60
 #
 # Needs one of: chromium, chromium-browser, google-chrome on PATH.
-set -u
+set -euo pipefail
 
 URL="${1:?usage: browser-run.sh <url> [timeout-seconds]}"
 TIMEOUT="${2:-120}"
@@ -17,7 +17,7 @@ PROFILE="$(mktemp -d /tmp/chrome-ondemand.XXXXXX)"
 
 CHROME_BIN="$(command -v chromium || command -v chromium-browser || command -v google-chrome || echo chromium)"
 
-cleanup() { rm -rf "$PROFILE"; }
+cleanup() { [[ "$PROFILE" == /tmp/* ]] || { echo 'FATAL: PROFILE not in safe location'; exit 1; }; rm -rf "$PROFILE"; }
 trap cleanup EXIT INT TERM
 
 "$CHROME_BIN" \
