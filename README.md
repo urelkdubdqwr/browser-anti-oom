@@ -30,8 +30,15 @@ Spawn it, do the work, kill it in `finally`. Idle = zero browser processes.
    the browser dies — not your agent. ([`docs/os-guards.md`](docs/os-guards.md))
 5. **Isolate with contexts, not profiles.** Browser contexts give you free
    cookie/storage isolation with zero extra disk. ([`docs/profile-strategy.md`](docs/profile-strategy.md))
+6. **If you DO keep a daemon, sweep its tabs.** Persistent browsers (needed when
+   tasks share a login session) leak tabs, and one leaked tab = one live renderer.
+   Measured: 57 leaked tabs = 815 MB. [`scripts/tab-sweep.py`](scripts/tab-sweep.py)
+   on a 30-min cron is the fix; the launcher must be race-safe and idempotent
+   ([`scripts/browser-daemon.sh`](scripts/browser-daemon.sh)) or you get two Chromes
+   on one profile. ([`docs/tab-hygiene.md`](docs/tab-hygiene.md))
 
-Impact order: on-demand (1) > lean flags (2) > concurrency cap (3) > OS guards (4).
+Impact order: on-demand (1) > tab hygiene when running a daemon (2 in §6) > lean
+flags (2) > concurrency cap (3) > OS guards (4).
 
 ## How it fits together
 
@@ -57,10 +64,14 @@ Needs: `chromium`, `chromium-browser`, or `google-chrome` on `PATH`.
 | Path | What it is |
 |---|---|
 | `scripts/browser-run.sh` | One-shot headless Chromium: dumps DOM, watchdog-kills on timeout, ephemeral profile in `/tmp`, self-cleaning. |
+| `scripts/browser-daemon.sh` | Persistent-daemon launcher: idempotent + race-safe (flock per profile). Never stacks a second Chrome on one profile, never `rm Singleton*`. |
+| `scripts/tab-sweep.py` | Close leaked tabs on persistent daemons via CDP, keep N newest. The fix for tab-leak renderers (see `docs/tab-hygiene.md`). |
+| `scripts/chrome-guard.sh` | Every-3-min health check: revive genuinely-dead daemons, one retry before declaring death (no relaunch storms). |
 | `scripts/pool.sh` | `source`-able slot pool (`acquire_slot`, default 2 slots) built on `flock`. Slots release automatically on shell exit. |
 | `examples/playwright-ondemand.mjs` | The canonical Playwright pattern: launch → work → `close()` in `finally`. |
 | `examples/cron-wrapper.sh` | Compose `pool.sh` + your task so 50 cron jobs never stampede the box. |
 | `docs/chromium-flags.md` | Every flag explained: what it does, why it saves RAM, when to skip it. |
+| `docs/tab-hygiene.md` | The leak flags can't fix: tab-leak renderers, sweep scheduling, impact order for daemons. |
 | `docs/os-guards.md` | Swap file, `earlyoom`, and systemd `MemoryMax` — the last line of defense. |
 | `docs/profile-strategy.md` | Contexts vs. profiles: how to isolate logins without 50 disk-hungry profiles. |
 
