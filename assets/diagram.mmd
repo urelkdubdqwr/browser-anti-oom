@@ -1,9 +1,14 @@
 flowchart LR
-    T[task triggered<br/>cron / agent / scraper] --> A[acquire slot<br/>flock pool · max 2]
-    A -.->|all slots busy| Q[queue<br/>waits, not spawns]
-    Q --> A
-    A --> S["spawn Chromium<br/>lean flags · ephemeral profile"]
-    S --> W[do the work]
-    W --> C["browser.close() in finally"]
-    C --> I(("idle = 0 chrome processes"))
-    I -.->|next task| T
+    G["chrome-guard.sh<br/>cron every 3 min"] --> H{"CDP health check<br/>GET /json/version"}
+    H -->|"ready"| R["daemon serves tasks<br/>slot pool: pool.sh<br/>flock, max 2 slots,<br/>auto-release on exit"]
+    H -->|"one check failed"| RY["retry once<br/>after 1 s<br/>(no relaunch storm)"]
+    RY -->|"recovers"| R
+    RY -->|"still dead"| RL["relaunch:<br/>browser-daemon.sh"]
+    RL --> F{"per-profile flock:<br/>process alive?"}
+    F -->|"yes, CDP not bound:<br/>wait max 20 s,<br/>never stack a 2nd Chrome,<br/>never rm Singleton*"| H
+    F -->|"no"| LB["spawn ONE daemon:<br/>Xvfb :99 shared,<br/>lean flags,<br/>--renderer-process-limit=2,<br/>--max-old-space-size=384,<br/>poll CDP up to 20 s"]
+    LB --> H
+    R --> TS["tab-sweep.py<br/>cron every 30 min:<br/>close leaked tabs oldest-first,<br/>keep N newest — never the last page"]
+    TS -->|"renderers freed"| H
+    R --> OG["OS OOM guards<br/>swap + earlyoom:<br/>the browser dies,<br/>the agent survives"]
+    OG -->|"daemon killed too"| G
