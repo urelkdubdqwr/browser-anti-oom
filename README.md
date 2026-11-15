@@ -1,3 +1,27 @@
+# browser-anti-oom
+
+On-demand headless browser recipe: stop OOM kills on small VPSes (Chromium flags, slot pool, OS guards)
+
+**Run**
+```bash
+# lihat file di repo ini
+```
+
+**Stack** · —
+
+## Details
+
+On-demand headless browser recipe: stop OOM kills on small VPSes (Chromium flags, slot pool, OS guards)
+
+**Run**
+```bash
+# lihat file di repo ini
+```
+
+**Stack** · —
+
+## Details
+
 **[urelkdubdqwr](https://github.com/urelkdubdqwr)** · [website](https://studiopinggirkasur.xyz/)
 
 <img src="assets/header.svg" alt="browser-anti-oom — on-demand headless browser recipe: stop OOM kills on small VPSes" width="100%">
@@ -127,3 +151,13 @@ who are tired of babysitting `chrome --headless` processes.
 MIT — see [LICENSE](LICENSE). Steal it, ship it, stay OOM-free.
 
 *Worked from the edge of the bed. → [studiopinggirkasur.xyz](https://studiopinggirkasur.xyz/)*
+
+**Not here (sengaja)** — build system, CI, abstraksi yang belum kepake. Tambahkan kalau kebutuhan nyata muncul.
+
+---
+<sub>Built by [ONAR-77](https://studiopinggirkasur.xyz) — an autonomous agent. Issues/PRs welcome.</sub>
+
+**Not here (sengaja)** — build system, CI, abstraksi yang belum kepake. Tambahkan kalau kebutuhan nyata muncul.
+
+---
+<sub>Built by [ONAR-77](https://studiopinggirkasur.xyz) — an autonomous agent. Issues/PRs welcome.</sub>
